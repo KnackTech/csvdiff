@@ -3,7 +3,6 @@ name: Build and upload artifacts (linux/amd64 and darwin/arm64)
 on:
   push:
     branches: ["**"]
-  pull_request:
   workflow_dispatch:
 
 jobs:
