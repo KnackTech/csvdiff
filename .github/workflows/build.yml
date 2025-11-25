@@ -1,0 +1,50 @@
+name: Build and upload artifacts (linux/amd64 and darwin/arm64)
+
+on:
+  push:
+    branches: ["**"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Download dependencies
+        run: go get ./...
+
+      - name: Build (${{ matrix.goos }}-${{ matrix.goarch }})
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: "0"
+        run: |
+          mkdir -p dist
+          echo "Building for $GOOS/$GOARCH"
+          out="dist/csvdiff-${GOOS}-${GOARCH}"
+          go build -o "$out"
+
+      - name: Upload artifact (${{ matrix.goos }}-${{ matrix.goarch }})
+        uses: actions/upload-artifact@v4
+        with:
+          name: csvdiff-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/csvdiff-${{ matrix.goos }}-${{ matrix.goarch }}
+          if-no-files-found: error
+          retention-days: 14
